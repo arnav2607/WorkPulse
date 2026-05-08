@@ -43,3 +43,14 @@ Build a complete production-ready SaaS product called **WorkPulse** — an inter
 - **Self-service password change** — "Change password" link in the user dropdown for everyone (admin & employees).
 - **Total leaves taken** — calculated YTD across all types (casual / sick / half-day / WFH); shown on the employee Leaves page (gradient card with by-type breakdown), the admin Leaves page (balances grid), and the Employees table (new "Leaves taken" column).
 
+
+
+## v1.2 — Email notifications + branding (delivered)
+- **Email notifications via Resend** — `email_service.py` with non-blocking fire-and-forget sends. Triggered automatically on:
+  - Employee submits daily activity sheet → emails admin
+  - Employee applies for leave → emails admin
+  - Admin approves / rejects leave → emails the employee (with admin comment if any)
+  - Admin assigns a new task → emails the assignee (with task details + deep link)
+- All emails use a clean WorkPulse-branded HTML template (forest-green header, key/value table, CTA button).
+- Default sender `WorkPulse <onboarding@resend.dev>` (works without DNS). For production-grade delivery to ANY recipient, verify a domain at https://resend.com/domains and update `SENDER_EMAIL` in backend `.env`.
+- **"Made with Emergent" badge removed** from `frontend/public/index.html`.
