@@ -5,6 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from auth import get_current_user, require_admin
 from database import db
+from email_service import (
+    fire_and_forget,
+    notify_employee_task_assigned,
+)
 from models import TaskCreate, TaskStatusUpdate, TaskReviewUpdate, RemarkCreate, new_id
 from notifications_helper import create_notification
 
@@ -38,6 +42,10 @@ async def create_task(body: TaskCreate, admin=Depends(require_admin)):
         reference_id=task["id"],
         reference_type="task",
     )
+    # Email the employee about the new task (non-blocking)
+    fire_and_forget(notify_employee_task_assigned(
+        assignee.get("email", ""), assignee.get("name", ""), {**task, "_id": None},
+    ))
     task.pop("_id", None)
     return {"success": True, "data": task}
 

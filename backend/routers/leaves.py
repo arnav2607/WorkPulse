@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timezone, date as ddate, timedelta
 from typing import Optional
 
@@ -5,10 +6,16 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from auth import get_current_user, require_admin, require_employee
 from database import db
+from email_service import (
+    fire_and_forget,
+    notify_admin_leave_applied,
+    notify_employee_leave_decided,
+)
 from models import LeaveCreate, LeaveDecision, new_id
 from notifications_helper import create_notification
 
 router = APIRouter(prefix="/leaves", tags=["leaves"])
+ADMIN_EMAIL = os.environ.get("ADMIN_NOTIFICATION_EMAIL", "")
 
 
 def _count_days(from_date: str, to_date: str) -> int:
@@ -44,6 +51,11 @@ async def apply_leave(body: LeaveCreate, emp=Depends(require_employee)):
             f"{emp['name']} applied for {body.leave_type} leave ({body.from_date} → {body.to_date})",
             reference_id=leave["id"], reference_type="leave",
         )
+    # Email admin (non-blocking)
+    if ADMIN_EMAIL:
+        fire_and_forget(notify_admin_leave_applied(
+            ADMIN_EMAIL, emp.get("name", "Employee"), {**leave, "_id": None},
+        ))
     leave.pop("_id", None)
     return {"success": True, "data": leave}
 
@@ -126,6 +138,13 @@ async def approve_leave(leave_id: str, body: LeaveDecision, admin=Depends(requir
         f"Your leave ({leave['from_date']} → {leave['to_date']}) was approved",
         reference_id=leave_id, reference_type="leave",
     )
+    # Email the employee
+    employee = await db.users.find_one({"id": leave["employee_id"]}, {"_id": 0, "email": 1, "name": 1})
+    if employee:
+        fire_and_forget(notify_employee_leave_decided(
+            employee.get("email", ""), employee.get("name", ""),
+            {**leave, "_id": None}, "approved", body.admin_comment or "",
+        ))
     return {"success": True}
 
 
@@ -150,6 +169,13 @@ async def reject_leave(leave_id: str, body: LeaveDecision, admin=Depends(require
         f"Your leave ({leave['from_date']} → {leave['to_date']}) was rejected",
         reference_id=leave_id, reference_type="leave",
     )
+    # Email the employee
+    employee = await db.users.find_one({"id": leave["employee_id"]}, {"_id": 0, "email": 1, "name": 1})
+    if employee:
+        fire_and_forget(notify_employee_leave_decided(
+            employee.get("email", ""), employee.get("name", ""),
+            {**leave, "_id": None}, "rejected", body.admin_comment or "",
+        ))
     return {"success": True}
 
 

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timezone, date as ddate
 from typing import Optional
 
@@ -5,9 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from auth import get_current_user, require_admin, require_employee
 from database import db
+from email_service import fire_and_forget, notify_admin_sheet_submitted
 from models import SheetSubmit, SheetDraftSave, new_id
 
 router = APIRouter(prefix="/sheets", tags=["sheets"])
+ADMIN_EMAIL = os.environ.get("ADMIN_NOTIFICATION_EMAIL", "")
 
 
 def today_iso() -> str:
@@ -94,6 +97,13 @@ async def submit_sheet(body: SheetSubmit, emp=Depends(require_employee)):
             "submitted_at": datetime.now(timezone.utc).isoformat(),
         }},
     )
+    # Email admin (non-blocking)
+    if ADMIN_EMAIL:
+        fire_and_forget(notify_admin_sheet_submitted(
+            ADMIN_EMAIL,
+            emp.get("name", "Employee"),
+            {"date": sheet.get("date", ""), "count": len(entries)},
+        ))
     return {"success": True}
 
 
