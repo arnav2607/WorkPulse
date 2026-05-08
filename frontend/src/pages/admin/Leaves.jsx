@@ -16,6 +16,7 @@ import { formatDate } from "@/utils/helpers";
 
 export default function AdminLeaves() {
   const [leaves, setLeaves] = useState([]);
+  const [employees, setEmployees] = useState([]);
   const [filter, setFilter] = useState("all");
   const [decision, setDecision] = useState(null); // {leave, action}
   const [comment, setComment] = useState("");
@@ -27,8 +28,12 @@ export default function AdminLeaves() {
   const load = async () => {
     const params = {};
     if (filter !== "all") params.status = filter;
-    const { data } = await api.get("/leaves", { params });
-    setLeaves(data.data || []);
+    const [a, e] = await Promise.all([
+      api.get("/leaves", { params }),
+      api.get("/employees", { params: { include_balance: true, is_active: true } }),
+    ]);
+    setLeaves(a.data.data || []);
+    setEmployees(e.data.data || []);
   };
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [filter]);
 
@@ -107,6 +112,46 @@ export default function AdminLeaves() {
             <SelectItem value="cancelled">Cancelled</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Leave balances summary */}
+      <div data-testid="leave-balances-section" className="bg-white border border-[#e5e3db] rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-display text-lg font-medium">Leave balances · {new Date().getFullYear()}</h3>
+          <p className="text-xs text-stone-500">Total approved leaves this year, per employee</p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {employees.map((e) => {
+            const b = e.balance || {};
+            const cap = (b.casual_total || 0) + (b.sick_total || 0);
+            const total = b.total_taken_ytd ?? 0;
+            const pct = cap ? Math.min(100, Math.round((total / cap) * 100)) : 0;
+            return (
+              <div key={e.id} data-testid={`bal-${e.id}`} className="rounded-xl border border-[#e5e3db] p-4 bg-[#fef8f0]/30">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-medium text-sm">{e.name}</p>
+                    <p className="text-[11px] uppercase tracking-wider text-stone-500">{e.role}{e.department ? ` · ${e.department}` : ""}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-display text-2xl font-semibold text-[#14532d]">{total}</p>
+                    <p className="text-[10px] uppercase tracking-wider text-stone-500">days taken</p>
+                  </div>
+                </div>
+                <div className="h-1.5 bg-stone-100 rounded-full mt-3 overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#14532d] to-emerald-500" style={{ width: `${pct}%` }} />
+                </div>
+                <div className="mt-2 flex items-center justify-between text-[11px] text-stone-600">
+                  <span>Casual: {b.casual_used ?? 0} / {b.casual_total ?? 0}</span>
+                  <span>Sick: {b.sick_used ?? 0} / {b.sick_total ?? 0}</span>
+                </div>
+              </div>
+            );
+          })}
+          {employees.length === 0 && (
+            <p className="col-span-full text-center text-stone-500 py-6 text-sm">No employees yet.</p>
+          )}
+        </div>
       </div>
 
       <div className="bg-white border border-[#e5e3db] rounded-xl overflow-hidden">

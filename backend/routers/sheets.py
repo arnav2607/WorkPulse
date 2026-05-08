@@ -44,7 +44,13 @@ async def _get_or_create_today_sheet(employee_id: str):
 @router.get("/today")
 async def get_today_sheet(emp=Depends(require_employee)):
     sheet = await _get_or_create_today_sheet(emp["id"])
-    template = await db.activity_templates.find({"is_active": True}, {"_id": 0}).sort("created_at", 1).to_list(500)
+    # Filter templates per-employee assignment
+    user = await db.users.find_one({"id": emp["id"]}, {"_id": 0, "assigned_template_ids": 1})
+    assigned_ids = user.get("assigned_template_ids") if user else None
+    q = {"is_active": True}
+    if assigned_ids is not None:
+        q["id"] = {"$in": assigned_ids}
+    template = await db.activity_templates.find(q, {"_id": 0}).sort("created_at", 1).to_list(500)
     return {"success": True, "data": {"sheet": sheet, "template": template}}
 
 
@@ -68,7 +74,12 @@ async def submit_sheet(body: SheetSubmit, emp=Depends(require_employee)):
         raise HTTPException(status_code=400, detail="Sheet already submitted")
     if sheet["status"] == "on_leave":
         return {"success": True, "data": {"status": "on_leave"}}
-    template = await db.activity_templates.find({"is_active": True}, {"_id": 0}).to_list(500)
+    user = await db.users.find_one({"id": emp["id"]}, {"_id": 0, "assigned_template_ids": 1})
+    assigned_ids = user.get("assigned_template_ids") if user else None
+    q = {"is_active": True}
+    if assigned_ids is not None:
+        q["id"] = {"$in": assigned_ids}
+    template = await db.activity_templates.find(q, {"_id": 0}).to_list(500)
     required_ids = {t["id"] for t in template if t.get("is_required", True)}
     submitted_ids = {e.template_id for e in body.entries}
     missing = required_ids - submitted_ids

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
-import { LogOut, ChevronDown, Menu } from "lucide-react";
+import { LogOut, ChevronDown, Menu, KeyRound } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
@@ -114,6 +114,9 @@ export default function Topbar({ role }) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => nav("/change-password")} data-testid="change-password-menu-item">
+                <KeyRound className="w-4 h-4 mr-2" /> Change password
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={handleLogoutClick} data-testid="logout-menu-item">
                 <LogOut className="w-4 h-4 mr-2" /> Logout
               </DropdownMenuItem>

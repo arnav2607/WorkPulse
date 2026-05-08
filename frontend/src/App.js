@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AdminRoute, EmployeeRoute } from "@/routes/RoleRoutes";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
+import ChangePassword from "@/pages/ChangePassword";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminEmployees from "@/pages/admin/Employees";
 import AdminTasks from "@/pages/admin/Tasks";
@@ -22,7 +23,14 @@ import EmpLeaves from "@/pages/employee/Leaves";
 function HomeRedirect() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
+  if (user.must_change_password) return <Navigate to="/change-password" replace />;
   return <Navigate to={user.role === "admin" ? "/admin/dashboard" : "/employee/dashboard"} replace />;
+}
+
+function PasswordGate({ children }) {
+  const { user } = useAuth();
+  if (user?.must_change_password) return <Navigate to="/change-password" replace />;
+  return children;
 }
 
 function App() {
@@ -31,9 +39,10 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/change-password" element={<ChangePassword />} />
           <Route path="/" element={<HomeRedirect />} />
 
-          <Route element={<AdminRoute><Layout /></AdminRoute>}>
+          <Route element={<AdminRoute><PasswordGate><Layout /></PasswordGate></AdminRoute>}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/employees" element={<AdminEmployees />} />
             <Route path="/admin/tasks" element={<AdminTasks />} />
@@ -44,7 +53,7 @@ function App() {
             <Route path="/admin/reports" element={<AdminReports />} />
           </Route>
 
-          <Route element={<EmployeeRoute><Layout /></EmployeeRoute>}>
+          <Route element={<EmployeeRoute><PasswordGate><Layout /></PasswordGate></EmployeeRoute>}>
             <Route path="/employee/dashboard" element={<EmpDashboard />} />
             <Route path="/employee/tasks" element={<EmpTasks />} />
             <Route path="/employee/tasks/:taskId" element={<EmpTaskDetail />} />

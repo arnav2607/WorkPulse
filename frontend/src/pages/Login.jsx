@@ -28,7 +28,11 @@ export default function Login() {
     try {
       const u = await login(email, password);
       toast.success(`Welcome, ${u.name}`);
-      nav(u.role === "admin" ? "/admin/dashboard" : "/employee/dashboard", { replace: true });
+      if (u.must_change_password) {
+        nav("/change-password", { replace: true });
+      } else {
+        nav(u.role === "admin" ? "/admin/dashboard" : "/employee/dashboard", { replace: true });
+      }
     } catch (err) {
       toast.error(err.response?.data?.detail || "Login failed");
     } finally {

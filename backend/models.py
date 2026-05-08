@@ -40,6 +40,16 @@ class EmployeeUpdate(BaseModel):
     password: Optional[str] = None
     department: Optional[str] = None
     is_active: Optional[bool] = None
+    role: Optional[Literal["admin", "employee"]] = None
+
+
+class AssignActivities(BaseModel):
+    template_ids: Optional[List[str]] = None  # None = all (default)
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
 
 
 class LoginRequest(BaseModel):

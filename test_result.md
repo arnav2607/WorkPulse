@@ -101,3 +101,145 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Test WorkPulse backend new enhancements: employee creation with must_change_password flag, password change flow, activity assignment per employee, role promotion, and leave balance breakdown"
+
+backend:
+  - task: "Employee creation with must_change_password flag"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/employees.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/employees creates employee with must_change_password=True, returns initial_password in response, and sets assigned_template_ids=null by default. All validations working correctly."
+
+  - task: "Login returns must_change_password flag"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/auth_router.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/auth/login correctly returns user object with must_change_password flag. New employees have flag set to true."
+
+  - task: "Password change flow with validations"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/auth_router.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/auth/change-password working perfectly. Validates: wrong current password (400), password length ≥6 chars (400), same password rejection (400). After successful change: must_change_password becomes false, old password fails, new password works."
+
+  - task: "Get employee activity assignments"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/employees.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/employees/{id}/activities returns correct structure with all_templates, assigned_ids, and is_all fields. For new employees: is_all=true and assigned_ids contains all active template IDs."
+
+  - task: "Set employee activity assignments"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/employees.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "PUT /api/employees/{id}/activities works correctly. Can set specific template_ids (is_all becomes false) or null to reset to all templates (is_all becomes true). Changes persist and are reflected in GET endpoint."
+
+  - task: "Sheets today filtered by employee assignment"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/sheets.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/sheets/today correctly filters templates based on employee's assigned_template_ids. Employee with limited assignment (2 templates) receives only those 2 templates, not all global templates."
+
+  - task: "Sheet submission for limited assignment employee"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/sheets.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "POST /api/sheets/submit works correctly for employees with limited activity assignments. Validates only required activities from assigned templates, not all global required activities. No 'all required missing' error when submitting only assigned activities."
+
+  - task: "Employee role promotion and demotion"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/employees.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "PATCH /api/employees/{id} with role field works perfectly. Employee role cannot access admin endpoints (403). After promotion to admin, can access admin endpoints (200). After demotion back to employee, access is denied again (403). Role-based access control working correctly."
+
+  - task: "Leave balance with breakdown by type"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/leaves.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/leaves/balance/{employee_id} returns complete balance information including total_taken_ytd (number) and by_type dict with keys: casual, sick, half_day, wfh. For new employees with no approved leaves, total_taken_ytd=0 and all by_type entries are 0."
+
+  - task: "Employees list with balance information"
+    implemented: true
+    working: true
+    file: "/app/backend/routers/employees.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "GET /api/employees?include_balance=true returns employees with balance object containing: casual_total, sick_total, casual_used, sick_used, total_taken_ytd. All fields present and correctly calculated for all employees."
+
+frontend:
+  # No frontend testing required per instructions
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus: []
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "testing"
+    message: "Completed comprehensive backend testing of all new WorkPulse enhancements. All 10 features tested with 25 individual test cases. All tests passed successfully. No issues found. Backend is production-ready."

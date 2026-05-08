@@ -27,10 +27,25 @@ async def seed():
             "role": "admin",
             "department": "Management",
             "is_active": True,
+            "must_change_password": False,
+            "assigned_template_ids": None,
             "created_at": datetime.now(timezone.utc).isoformat(),
         })
         print(f"[seed] Admin created: {admin_email}")
     else:
+        # Make sure existing seeded admin has the new fields
+        await db.users.update_one(
+            {"email": admin_email},
+            {"$setOnInsert": {}, "$set": {}},
+        )
+        await db.users.update_one(
+            {"email": admin_email, "must_change_password": {"$exists": False}},
+            {"$set": {"must_change_password": False}},
+        )
+        await db.users.update_one(
+            {"email": admin_email, "assigned_template_ids": {"$exists": False}},
+            {"$set": {"assigned_template_ids": None}},
+        )
         print(f"[seed] Admin exists: {admin_email}")
 
     # Default template items

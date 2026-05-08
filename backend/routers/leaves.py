@@ -176,4 +176,27 @@ async def get_balance(employee_id: str, user=Depends(get_current_user)):
             "casual_total": 12, "sick_total": 6, "casual_used": 0, "sick_used": 0,
         }
         await db.leave_balances.insert_one(dict(bal))
+        bal.pop("_id", None)
+
+    # Compute total leaves taken this year across ALL types (approved only)
+    year_start = f"{year}-01-01"
+    year_end = f"{year}-12-31"
+    approved = await db.leave_requests.find({
+        "employee_id": employee_id,
+        "status": "approved",
+        "from_date": {"$lte": year_end},
+        "to_date": {"$gte": year_start},
+    }, {"_id": 0}).to_list(2000)
+
+    by_type = {"casual": 0, "sick": 0, "half_day": 0, "wfh": 0}
+    total_taken = 0
+    for lv in approved:
+        d1 = ddate.fromisoformat(max(lv["from_date"], year_start))
+        d2 = ddate.fromisoformat(min(lv["to_date"], year_end))
+        days = (d2 - d1).days + 1
+        by_type[lv["leave_type"]] = by_type.get(lv["leave_type"], 0) + days
+        total_taken += days
+
+    bal["by_type"] = by_type
+    bal["total_taken_ytd"] = total_taken
     return {"success": True, "data": bal}

@@ -66,7 +66,7 @@ export default function EmployeeLeaves() {
       </div>
 
       {balance && (
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid sm:grid-cols-3 gap-4">
           {[
             { label: "Casual", used: balance.casual_used, total: balance.casual_total, color: "from-blue-500 to-sky-400" },
             { label: "Sick", used: balance.sick_used, total: balance.sick_total, color: "from-rose-500 to-pink-400" },
@@ -82,6 +82,21 @@ export default function EmployeeLeaves() {
               </div>
             </div>
           ))}
+          <div data-testid="total-taken-card" className="p-5 rounded-xl bg-gradient-to-br from-[#14532d] to-[#166534] text-white border border-[#14532d]">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-white/70 mb-2">Total taken · {new Date().getFullYear()}</p>
+            <div className="flex items-end gap-2">
+              <span className="font-display text-4xl font-semibold">{balance.total_taken_ytd ?? 0}</span>
+              <span className="text-white/70 text-sm pb-1">days this year</span>
+            </div>
+            <div className="mt-3 grid grid-cols-4 gap-1 text-[10px]">
+              {balance.by_type && Object.entries(balance.by_type).map(([k, v]) => (
+                <div key={k} className="bg-white/10 rounded px-1.5 py-1 text-center">
+                  <p className="uppercase tracking-wider text-white/60">{k.replace("_"," ")}</p>
+                  <p className="font-semibold">{v}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
