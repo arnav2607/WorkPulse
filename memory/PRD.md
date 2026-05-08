@@ -35,3 +35,11 @@ Build a complete production-ready SaaS product called **WorkPulse** — an inter
 - **P2**: Export to PDF for monthly reports; attendance heat-map.
 - **P3**: Two-factor authentication; password reset flow.
 - **P3**: Multi-tenant support and SSO.
+
+## v1.1 — May 2026 enhancements (delivered)
+- **Per-employee activity sheets** — admin assigns a custom set of activity templates per team member (`assigned_template_ids`); the daily sheet auto-filters server-side. "All (auto-includes new)" mode preserves backward-compat.
+- **Role promotion** — admin can promote any employee to admin (and demote back) via row toggle or edit form.
+- **Initial-password mechanism** — admin enters or auto-generates a temporary password during employee creation; credentials are revealed once via a copy-modal; new accounts get `must_change_password=true` and are forced to set a new password on first login.
+- **Self-service password change** — "Change password" link in the user dropdown for everyone (admin & employees).
+- **Total leaves taken** — calculated YTD across all types (casual / sick / half-day / WFH); shown on the employee Leaves page (gradient card with by-type breakdown), the admin Leaves page (balances grid), and the Employees table (new "Leaves taken" column).
+
