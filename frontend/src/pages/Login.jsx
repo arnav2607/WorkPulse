@@ -121,11 +121,6 @@ export default function Login() {
           >
             {busy ? "Signing in…" : "Sign in"}
           </Button>
-
-          <div className="mt-8 p-4 rounded-xl bg-[#fef8f0] border border-[#e5e3db] text-xs text-stone-600">
-            <p className="font-medium text-stone-800 mb-1">Admin demo</p>
-            <p>arnavpgoel@gmail.com · arnav2607</p>
-          </div>
         </form>
       </div>
     </div>

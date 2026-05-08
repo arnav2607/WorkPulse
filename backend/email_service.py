@@ -1,63 +1,89 @@
-"""Email service backed by Resend.
+"""Email service backed by Gmail SMTP (or any SMTP provider).
 
 Non-blocking: send_email_safe never raises into the request handler — errors are logged.
-With unverified domains, Resend only delivers to the account-owner's email; we treat 403 as
-a soft warning so the rest of the user flow keeps working.
+Use a Gmail App Password (16 chars) — generate at https://myaccount.google.com/apppasswords.
 """
 from __future__ import annotations
 
 import asyncio
 import logging
 import os
+import smtplib
+import ssl
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formataddr, parseaddr
 from typing import Optional
-
-import resend
 
 logger = logging.getLogger("workpulse.email")
 
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "WorkPulse <onboarding@resend.dev>")
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+# Gmail app passwords are 16 chars; users often paste with spaces. Strip them.
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").replace(" ", "")
+SENDER_EMAIL = os.environ.get("SENDER_EMAIL", SMTP_USER)
 ADMIN_EMAIL = os.environ.get("ADMIN_NOTIFICATION_EMAIL", "")
 APP_URL = os.environ.get("APP_URL", "")
 
-if RESEND_API_KEY:
-    resend.api_key = RESEND_API_KEY
-
 
 # ---------- Low-level send ----------
-def _send_sync(to: str, subject: str, html: str) -> Optional[str]:
-    if not RESEND_API_KEY:
-        logger.warning("RESEND_API_KEY not configured — skipping email to %s", to)
-        return None
+def _send_sync(to: str, subject: str, html: str) -> bool:
+    if not (SMTP_USER and SMTP_PASSWORD):
+        logger.warning("SMTP credentials not configured — skipping email to %s", to)
+        return False
     if not to:
         logger.warning("No recipient — skipping email")
-        return None
-    params = {"from": SENDER_EMAIL, "to": [to], "subject": subject, "html": html}
+        return False
+
+    from_name, from_addr = parseaddr(SENDER_EMAIL)
+    if not from_addr:
+        from_addr = SMTP_USER
+    if not from_name:
+        from_name = "WorkPulse"
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = formataddr((from_name, from_addr))
+    msg["To"] = to
+    msg["Reply-To"] = from_addr
+    msg.attach(MIMEText("Open this email in an HTML-capable client to view the full content.", "plain"))
+    msg.attach(MIMEText(html, "html"))
+
     try:
-        result = resend.Emails.send(params)
-        eid = result.get("id") if isinstance(result, dict) else None
-        logger.info("Email sent → %s (id=%s, subj=%s)", to, eid, subject)
-        return eid
-    except Exception as exc:  # noqa: BLE001
-        msg = str(exc)
-        if "validation_error" in msg or "verify a domain" in msg or "403" in msg:
-            logger.warning(
-                "Email to %s skipped — Resend test-mode restriction: %s. "
-                "Verify a domain at resend.com/domains to send to all employees.",
-                to, msg,
-            )
+        if SMTP_PORT == 465:
+            ctx = ssl.create_default_context()
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=ctx, timeout=20) as smtp:
+                smtp.login(SMTP_USER, SMTP_PASSWORD)
+                smtp.sendmail(from_addr, [to], msg.as_string())
         else:
-            logger.error("Failed sending email to %s: %s", to, msg)
-        return None
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as smtp:
+                smtp.ehlo()
+                smtp.starttls(context=ssl.create_default_context())
+                smtp.ehlo()
+                smtp.login(SMTP_USER, SMTP_PASSWORD)
+                smtp.sendmail(from_addr, [to], msg.as_string())
+        logger.info("Email sent → %s (subj=%s)", to, subject)
+        return True
+    except smtplib.SMTPAuthenticationError as exc:
+        logger.error(
+            "SMTP auth failed for %s — check SMTP_USER / SMTP_PASSWORD (use a Gmail App Password, NOT account password). %s",
+            SMTP_USER, exc,
+        )
+        return False
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Failed sending email to %s: %s", to, exc)
+        return False
 
 
-async def send_email_safe(to: str, subject: str, html: str) -> None:
-    """Fire-and-forget. Runs the SDK in a thread; never raises."""
+async def send_email_safe(to: str, subject: str, html: str) -> Optional[bool]:
+    """Fire-and-forget. Runs SMTP in a thread so we never block the event loop."""
     try:
-        await asyncio.to_thread(_send_sync, to, subject, html)
+        return await asyncio.to_thread(_send_sync, to, subject, html)
     except Exception as exc:  # noqa: BLE001
         logger.error("send_email_safe outer error: %s", exc)
+        return False
 
 
 def fire_and_forget(coro) -> None:
@@ -65,7 +91,6 @@ def fire_and_forget(coro) -> None:
     try:
         asyncio.create_task(coro)
     except RuntimeError:
-        # Outside event loop — run synchronously as a last resort
         asyncio.run(coro)
 
 
