@@ -1,0 +1,133 @@
+{
+  "theme": "light",
+  "archetype": "1_organic_and_earthy",
+  "mood": "calm, modern, distinctive, eye-friendly, grounded, professional",
+  "colors": {
+    "background": "#fdfbf7",
+    "surface": "#ffffff",
+    "primary": {
+      "DEFAULT": "#14532d",
+      "hover": "#166534",
+      "foreground": "#ffffff"
+    },
+    "secondary": {
+      "DEFAULT": "#d4a574",
+      "hover": "#b88a5b",
+      "foreground": "#1c1917"
+    },
+    "accent": {
+      "DEFAULT": "#fdba74",
+      "hover": "#f97316",
+      "foreground": "#1c1917"
+    },
+    "muted": {
+      "DEFAULT": "#f5e8d3",
+      "foreground": "#78716c"
+    },
+    "text": {
+      "primary": "#1c1917",
+      "secondary": "#57534e",
+      "tertiary": "#a8a29e"
+    },
+    "border": "#e5e3db",
+    "status": {
+      "pending": "#f59e0b",
+      "in_progress": "#3b82f6",
+      "done": "#10b981",
+      "blocked": "#ef4444",
+      "approved": "#10b981",
+      "needs_rework": "#f97316",
+      "closed": "#6b7280",
+      "missed": "#ef4444",
+      "on_leave": "#8b5cf6",
+      "draft": "#9ca3af",
+      "submitted": "#14532d"
+    },
+    "charts": [
+      "#14532d",
+      "#22c55e",
+      "#fdba74",
+      "#d4a574",
+      "#86efac",
+      "#f97316"
+    ]
+  },
+  "typography": {
+    "headings": "Outfit",
+    "body": "Manrope",
+    "hierarchy": {
+      "h1": "text-4xl tracking-tight font-semibold",
+      "h2": "text-2xl tracking-tight font-medium",
+      "h3": "text-xl tracking-tight font-medium",
+      "h4": "text-lg font-medium",
+      "body": "text-base leading-relaxed",
+      "small": "text-sm uppercase tracking-wider"
+    }
+  },
+  "spacing_and_layout": {
+    "general": "Generous spacing. p-6 or p-8 for cards. Use optical alignment instead of purely geometrical.",
+    "dashboard_grid": "Control Room Grid: grid-cols-1 md:grid-cols-3 lg:grid-cols-4. gap-6.",
+    "metric_cards": "col-span-1. Minimalist flat with 1px border border-[#e5e3db], no shadow. Subtle rounded corners (rounded-xl).",
+    "tables": "Dense, clean. Remove vertical borders. Subtly tinted header rows (bg-[#f5e8d3]/30).",
+    "sidebar": "Fixed, border-r border-[#e5e3db], light cream bg (#fef8f0) to separate from main canvas.",
+    "container": "Max width for content blocks should be 7xl for readability."
+  },
+  "surface_styles": {
+    "metric_cards": "Flat background (#ffffff), 1px subtle border (#e5e3db), rounded-xl, hover:-translate-y-1 hover:shadow-sm transition-all duration-300.",
+    "topbar": "Glassmorphism: backdrop-blur-xl bg-[#fdfbf7]/70, border-b border-[#e5e3db]/50, sticky z-50.",
+    "buttons": "Primary: Solid matte deep green (#14532d). Secondary: Muted mustard/terracotta outline or subtle fill. Rounded-lg or rounded-xl.",
+    "modals": "Solid white background, rounded-2xl, shadow-2xl, max-w-md w-full.",
+    "inputs": "Bg-white border-[#e5e3db] focus:ring-2 focus:ring-[#14532d]/20 focus:border-[#14532d]."
+  },
+  "components": {
+    "tabs": "Shadcn tabs, override fixed height to h-auto. Active tab: bg-white shadow-sm rounded-md.",
+    "forms": "Inputs with soft focus rings. Do not use native date inputs, use Shadcn calendar.",
+    "status_badges": "Rounded-full px-2.5 py-0.5 text-xs font-medium. Use pale backgrounds with darker text (e.g. pending: bg-amber-100 text-amber-800)."
+  },
+  "media": {
+    "images": [
+      {
+        "category": "brand_logo",
+        "url": "https://static.prod-images.emergentagent.com/jobs/af951721-d124-416e-ae7b-24717e22921d/images/c17994e0aa32292e1a0e1601f88eca240600ef475f3ada3cfe04c5f66fbb5bfb.png",
+        "description": "Minimalist geometric abstract logo mark in forest green and terracotta. Use in sidebar header and login screen."
+      },
+      {
+        "category": "login_background",
+        "url": "https://static.prod-images.emergentagent.com/jobs/af951721-d124-416e-ae7b-24717e22921d/images/3dcc1df6bc3d0c06dd586e4f257c914ef9eb672e36c14dc485a7e9ab040a5d35.png",
+        "description": "Abstract architectural background with warm bone-white and soft sage green tones. Use as side hero or full bg on auth page."
+      },
+      {
+        "category": "avatar_1",
+        "url": "https://images.unsplash.com/photo-1762522926157-bcc04bf0b10a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3ODEzMTU3MHww&ixlib=rb-4.1.0&q=85",
+        "description": "Employee avatar"
+      },
+      {
+        "category": "avatar_2",
+        "url": "https://images.unsplash.com/photo-1655249493799-9cee4fe983bb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3ODEzMTU3MHww&ixlib=rb-4.1.0&q=85",
+        "description": "Admin avatar"
+      },
+      {
+        "category": "avatar_3",
+        "url": "https://images.unsplash.com/photo-1769636929388-99eff95d3bf1?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzV8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3ODEzMTU3MHww&ixlib=rb-4.1.0&q=85",
+        "description": "Employee avatar"
+      }
+    ],
+    "icons": "lucide-react"
+  },
+  "motion_and_interactions": {
+    "hover": "Subtle -translate-y-[2px] for cards, brightness reduction for buttons.",
+    "page_transitions": "Fade-in with slight upward stagger using framer-motion.",
+    "accessibility": "focus-visible rings on all interactive elements. data-testid attributes mandatory."
+  },
+  "instructions_to_main_agent": [
+    "Strictly adhere to the color palette. Avoid default Tailwind blues/purples.",
+    "Use 'Outfit' for headings and 'Manrope' for body text. Load from Google Fonts.",
+    "All interactive elements MUST have data-testid attributes (e.g., data-testid='submit-btn').",
+    "Use Recharts for the dashboards (bar chart for weekly task completion, line chart for sheet submission rate, pie chart for task status). Apply the 'charts' color array.",
+    "Use the provided image URLs for logos and avatars. Do NOT use placeholder text or dummyimage.",
+    "Structure pages using standard shadcn/ui primitives but customize their Tailwind classes to match the 'surface_styles' defined.",
+    "Add 'backdrop-blur-xl' to topbar for the crystal glass effect.",
+    "Create generic status badge component applying the colors from 'status' dictionary using soft backgrounds and dark text (e.g. bg-green-100 text-green-800 for done).",
+    "Ensure all forms and interactive elements are customized away from the default 'Vercel-look'."
+  ]
+}
