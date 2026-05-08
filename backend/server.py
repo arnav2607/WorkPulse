@@ -42,6 +42,9 @@ async def lifespan(app: FastAPI):
     await db.leave_requests.create_index("employee_id")
     await db.leave_requests.create_index("status")
     await db.notifications.create_index([("user_id", 1), ("is_read", 1)])
+    await db.reminder_log.create_index(
+        [("kind", 1), ("target_id", 1), ("sent_date", 1)], unique=True
+    )
     start_scheduler()
     yield
 

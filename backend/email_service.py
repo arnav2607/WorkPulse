@@ -239,3 +239,42 @@ async def notify_employee_task_assigned(employee_email: str, employee_name: str,
         cta_html=_btn(cta_url, "Open task"),
     )
     await send_email_safe(employee_email, f"📌 New task: {task.get('title','')}", html)
+
+
+async def notify_employee_task_deadline_tomorrow(employee_email: str, employee_name: str, task: dict) -> None:
+    if not employee_email:
+        return
+    body = _kv_table([
+        ("Title", task.get("title", "")),
+        ("Priority", str(task.get("priority", "")).title()),
+        ("Deadline", f'<span style="color:#b45309;font-weight:600">{task.get("deadline","")} · tomorrow</span>'),
+        ("Current status", str(task.get("status", "")).replace("_", " ").title()),
+    ])
+    task_id = task.get("id", "")
+    cta_url = f"{APP_URL}/employee/tasks/{task_id}" if (APP_URL and task_id) else (f"{APP_URL}/employee/tasks" if APP_URL else "")
+    html = _shell(
+        title="Task deadline tomorrow",
+        intro=f"Hi {employee_name}, this is a friendly reminder that one of your tasks is due tomorrow.",
+        body_html=body,
+        cta_html=_btn(cta_url, "Open task"),
+    )
+    await send_email_safe(employee_email, f"⏰ Reminder: '{task.get('title','')}' is due tomorrow", html)
+
+
+async def notify_employee_sheet_pending(employee_email: str, employee_name: str) -> None:
+    if not employee_email:
+        return
+    body = (
+        '<p style="margin:0;color:#44403c;font-size:13px;line-height:1.6">'
+        "Just a quick reminder to submit today's activity sheet before the day ends. "
+        "It only takes a minute, and it keeps your manager updated on what you accomplished today."
+        "</p>"
+    )
+    cta_url = f"{APP_URL}/employee/sheet" if APP_URL else ""
+    html = _shell(
+        title="Don't forget your daily sheet",
+        intro=f"Hi {employee_name}, you haven't submitted today's activity sheet yet.",
+        body_html=body,
+        cta_html=_btn(cta_url, "Submit my sheet"),
+    )
+    await send_email_safe(employee_email, "🕕 Reminder · Daily activity sheet pending", html)
