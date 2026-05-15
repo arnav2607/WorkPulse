@@ -114,13 +114,65 @@ export default function ActivityTemplates() {
               {form.frequency !== "daily" && (
                 <div>
                   <Label>Frequency Value</Label>
-                  <Input 
-                    placeholder={form.frequency === "weekly" ? "e.g. Sat" : form.frequency === "monthly" ? "e.g. 05" : "e.g. 06-01"} 
-                    value={form.frequency_value || ""} 
-                    onChange={(e) => setForm({ ...form, frequency_value: e.target.value })} 
-                  />
+                  {form.frequency === "weekly" && (
+                    <select
+                      className="flex h-10 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#14532d]"
+                      value={form.frequency_value}
+                      onChange={(e) => setForm({ ...form, frequency_value: e.target.value })}
+                    >
+                      <option value="">Select day</option>
+                      {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  )}
+                  {form.frequency === "monthly" && (
+                    <select
+                      className="flex h-10 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#14532d]"
+                      value={form.frequency_value}
+                      onChange={(e) => setForm({ ...form, frequency_value: e.target.value })}
+                    >
+                      <option value="">Select date</option>
+                      {Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0')).map(d => (
+                        <option key={d} value={d}>{d}</option>
+                      ))}
+                    </select>
+                  )}
+                  {form.frequency === "annually" && (
+                    <div className="flex gap-2">
+                      <select
+                        className="flex h-10 w-1/2 rounded-md border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#14532d]"
+                        value={form.frequency_value.split("-")[0] || ""}
+                        onChange={(e) => {
+                          const parts = form.frequency_value.split("-");
+                          const day = parts[1] || "01";
+                          setForm({ ...form, frequency_value: `${e.target.value}-${day}` });
+                        }}
+                      >
+                        <option value="">Month</option>
+                        {Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0')).map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                      <select
+                        className="flex h-10 w-1/2 rounded-md border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#14532d]"
+                        value={form.frequency_value.split("-")[1] || ""}
+                        onChange={(e) => {
+                          const parts = form.frequency_value.split("-");
+                          const month = parts[0] || "01";
+                          setForm({ ...form, frequency_value: `${month}-${e.target.value}` });
+                        }}
+                      >
+                        <option value="">Day</option>
+                        {Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0')).map(d => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
+
             </div>
             <div className="flex items-center justify-between border border-[#e5e3db] rounded-lg p-3">
               <div>
