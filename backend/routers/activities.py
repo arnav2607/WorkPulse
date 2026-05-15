@@ -28,6 +28,8 @@ async def create_template(body: ActivityTemplateCreate, admin=Depends(require_ad
         "name": body.name,
         "description": body.description or "",
         "is_required": body.is_required,
+        "frequency": body.frequency,
+        "frequency_value": body.frequency_value,
         "is_active": True,
         "created_by": admin["id"],
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -35,6 +37,7 @@ async def create_template(body: ActivityTemplateCreate, admin=Depends(require_ad
     await db.activity_templates.insert_one(item)
     item.pop("_id", None)
     return {"success": True, "data": item}
+
 
 
 @router.patch("/template/{item_id}")

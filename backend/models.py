@@ -94,6 +94,9 @@ class ActivityTemplateCreate(BaseModel):
     name: str
     description: Optional[str] = ""
     is_required: bool = True
+    frequency: Literal["daily", "weekly", "monthly", "annually"] = "daily"
+    frequency_value: Optional[str] = None
+
 
 
 class ActivityTemplateUpdate(BaseModel):
@@ -101,6 +104,9 @@ class ActivityTemplateUpdate(BaseModel):
     description: Optional[str] = None
     is_required: Optional[bool] = None
     is_active: Optional[bool] = None
+    frequency: Optional[Literal["daily", "weekly", "monthly", "annually"]] = None
+    frequency_value: Optional[str] = None
+
 
 
 SheetEntryStatus = Literal["done", "not_done", "not_required"]

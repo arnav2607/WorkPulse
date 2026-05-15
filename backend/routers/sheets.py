@@ -47,14 +47,38 @@ async def _get_or_create_today_sheet(employee_id: str):
 @router.get("/today")
 async def get_today_sheet(emp=Depends(require_employee)):
     sheet = await _get_or_create_today_sheet(emp["id"])
+    today = datetime.now()
+    day_name = today.strftime("%a")      # "Mon", "Tue"...
+    day_num = today.strftime("%d")       # "01", "02"...
+    month_day = today.strftime("%m-%d")  # "01-01"...
+
     # Filter templates per-employee assignment
     user = await db.users.find_one({"id": emp["id"]}, {"_id": 0, "assigned_template_ids": 1})
     assigned_ids = user.get("assigned_template_ids") if user else None
+    
     q = {"is_active": True}
     if assigned_ids is not None:
         q["id"] = {"$in": assigned_ids}
-    template = await db.activity_templates.find(q, {"_id": 0}).sort("created_at", 1).to_list(500)
-    return {"success": True, "data": {"sheet": sheet, "template": template}}
+        
+    all_templates = await db.activity_templates.find(q, {"_id": 0}).sort("created_at", 1).to_list(500)
+    
+    # Filter by frequency
+    filtered = []
+    for t in all_templates:
+        freq = t.get("frequency", "daily")
+        val = t.get("frequency_value")
+        
+        if freq == "daily":
+            filtered.append(t)
+        elif freq == "weekly" and val == day_name:
+            filtered.append(t)
+        elif freq == "monthly" and val == day_num:
+            filtered.append(t)
+        elif freq == "annually" and val == month_day:
+            filtered.append(t)
+            
+    return {"success": True, "data": {"sheet": sheet, "template": filtered}}
+
 
 
 @router.post("/draft")
