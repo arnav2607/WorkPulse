@@ -31,13 +31,22 @@ function MetricCard({ icon: Icon, label, value, accent, testid }) {
 
 export default function AdminDashboard() {
   const [data, setData] = useState(null);
+  const [empStats, setEmpStats] = useState([]);
+  const [selectedEmpId, setSelectedEmpId] = useState("");
   const nav = useNavigate();
 
   useEffect(() => {
     api.get("/dashboard/admin").then((r) => setData(r.data.data)).catch(() => {});
+    api.get("/dashboard/admin/employee-stats").then((r) => {
+      setEmpStats(r.data.data);
+      if (r.data.data.length > 0) {
+        setSelectedEmpId(r.data.data[0].id);
+      }
+    }).catch(() => {});
   }, []);
 
   const m = data?.metrics || {};
+  const selectedEmp = empStats.find(e => e.id === selectedEmpId);
   return (
     <div data-testid="admin-dashboard" className="space-y-8">
       <div className="flex items-end justify-between flex-wrap gap-4">
@@ -141,6 +150,82 @@ export default function AdminDashboard() {
             </LineChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      <div className="bg-white border border-[#e5e3db] rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-display text-lg font-medium">Employee Analytics</h3>
+            <p className="text-xs text-stone-500">Select an employee to view their individual performance</p>
+          </div>
+          <select
+            value={selectedEmpId}
+            onChange={(e) => setSelectedEmpId(e.target.value)}
+            className="text-sm border border-[#e5e3db] rounded-lg px-3 py-1.5 bg-stone-50 outline-none focus:border-[#14532d]"
+          >
+            {empStats.map(e => (
+              <option key={e.id} value={e.id}>{e.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {selectedEmp ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-stone-50 border border-[#e5e3db] rounded-xl p-4">
+              <h4 className="text-sm font-medium mb-1">Task Completion</h4>
+              <p className="text-[11px] text-stone-500 mb-4">All time</p>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={selectedEmp.task_distribution}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%" cy="50%"
+                      outerRadius={70}
+                      innerRadius={40}
+                      paddingAngle={3}
+                    >
+                      {(selectedEmp.task_distribution || []).map((_, i) => (
+                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e5e3db", fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-stone-50 border border-[#e5e3db] rounded-xl p-4">
+              <h4 className="text-sm font-medium mb-1">Activity Sheet Completion</h4>
+              <p className="text-[11px] text-stone-500 mb-4">Last 30 days</p>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={selectedEmp.sheet_distribution}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%" cy="50%"
+                      outerRadius={70}
+                      innerRadius={40}
+                      paddingAngle={3}
+                    >
+                      {(selectedEmp.sheet_distribution || []).map((_, i) => (
+                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e5e3db", fontSize: 12 }} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-stone-500 py-6">No employee data available.</p>
+        )}
       </div>
 
       <div className="bg-white border border-[#e5e3db] rounded-xl p-6">

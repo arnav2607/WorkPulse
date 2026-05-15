@@ -75,6 +75,45 @@ async def admin_dashboard(_admin=Depends(require_admin)):
         },
     }
 
+@router.get("/admin/employee-stats")
+async def employee_stats(_admin=Depends(require_admin)):
+    employees = await db.users.find(
+        {"role": "employee", "is_active": True}, {"_id": 0, "id": 1, "name": 1}
+    ).to_list(500)
+    res = []
+    thirty_days_ago = (ddate.today() - timedelta(days=30)).isoformat()
+    
+    for emp in employees:
+        # Task distribution for this employee
+        pipeline = [
+            {"$match": {"assigned_to": emp["id"]}},
+            {"$group": {"_id": "$status", "count": {"$sum": 1}}}
+        ]
+        task_cursor = db.tasks.aggregate(pipeline)
+        task_dist = []
+        async for row in task_cursor:
+            task_dist.append({"name": row["_id"], "value": row["count"]})
+            
+        # Sheet distribution (last 30 days)
+        sheet_pipeline = [
+            {"$match": {"employee_id": emp["id"], "date": {"$gte": thirty_days_ago}}},
+            {"$group": {"_id": "$status", "count": {"$sum": 1}}}
+        ]
+        sheet_cursor = db.activity_sheets.aggregate(sheet_pipeline)
+        sheet_dist = []
+        async for row in sheet_cursor:
+            sheet_dist.append({"name": row["_id"], "value": row["count"]})
+            
+        res.append({
+            "id": emp["id"],
+            "name": emp["name"],
+            "task_distribution": task_dist,
+            "sheet_distribution": sheet_dist
+        })
+        
+    return {"success": True, "data": res}
+
+
 
 @router.get("/employee")
 async def employee_dashboard(emp=Depends(require_employee)):
