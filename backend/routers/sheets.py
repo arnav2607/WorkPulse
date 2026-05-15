@@ -44,25 +44,11 @@ async def _get_or_create_today_sheet(employee_id: str):
     return sheet
 
 
-@router.get("/today")
-async def get_today_sheet(emp=Depends(require_employee)):
-    sheet = await _get_or_create_today_sheet(emp["id"])
-    today = datetime.now()
-    day_name = today.strftime("%a")      # "Mon", "Tue"...
-    day_num = today.strftime("%d")       # "01", "02"...
-    month_day = today.strftime("%m-%d")  # "01-01"...
-
-    # Filter templates per-employee assignment
-    user = await db.users.find_one({"id": emp["id"]}, {"_id": 0, "assigned_template_ids": 1})
-    assigned_ids = user.get("assigned_template_ids") if user else None
+def _filter_templates_for_date(all_templates: list, date_obj: ddate) -> list:
+    day_name = date_obj.strftime("%a")      # "Mon", "Tue"...
+    day_num = date_obj.strftime("%d")       # "01", "02"...
+    month_day = date_obj.strftime("%m-%d")  # "01-01"...
     
-    q = {"is_active": True}
-    if assigned_ids is not None:
-        q["id"] = {"$in": assigned_ids}
-        
-    all_templates = await db.activity_templates.find(q, {"_id": 0}).sort("created_at", 1).to_list(500)
-    
-    # Filter by frequency
     filtered = []
     for t in all_templates:
         freq = t.get("frequency", "daily")
@@ -76,9 +62,26 @@ async def get_today_sheet(emp=Depends(require_employee)):
             filtered.append(t)
         elif freq == "annually" and val == month_day:
             filtered.append(t)
+    return filtered
+
+
+@router.get("/today")
+async def get_today_sheet(emp=Depends(require_employee)):
+    sheet = await _get_or_create_today_sheet(emp["id"])
+    today_date = datetime.now(timezone.utc).date()
+
+    # Filter templates per-employee assignment
+    user = await db.users.find_one({"id": emp["id"]}, {"_id": 0, "assigned_template_ids": 1})
+    assigned_ids = user.get("assigned_template_ids") if user else None
+    
+    q = {"is_active": True}
+    if assigned_ids is not None:
+        q["id"] = {"$in": assigned_ids}
+        
+    all_templates = await db.activity_templates.find(q, {"_id": 0}).sort("created_at", 1).to_list(500)
+    filtered = _filter_templates_for_date(all_templates, today_date)
             
     return {"success": True, "data": {"sheet": sheet, "template": filtered}}
-
 
 
 @router.post("/draft")
@@ -101,13 +104,19 @@ async def submit_sheet(body: SheetSubmit, emp=Depends(require_employee)):
         raise HTTPException(status_code=400, detail="Sheet already submitted")
     if sheet["status"] == "on_leave":
         return {"success": True, "data": {"status": "on_leave"}}
+    
+    today_date = datetime.now(timezone.utc).date()
     user = await db.users.find_one({"id": emp["id"]}, {"_id": 0, "assigned_template_ids": 1})
     assigned_ids = user.get("assigned_template_ids") if user else None
+    
     q = {"is_active": True}
     if assigned_ids is not None:
         q["id"] = {"$in": assigned_ids}
-    template = await db.activity_templates.find(q, {"_id": 0}).to_list(500)
-    required_ids = {t["id"] for t in template if t.get("is_required", True)}
+        
+    all_templates = await db.activity_templates.find(q, {"_id": 0}).to_list(500)
+    filtered_templates = _filter_templates_for_date(all_templates, today_date)
+    
+    required_ids = {t["id"] for t in filtered_templates if t.get("is_required", True)}
     submitted_ids = {e.template_id for e in body.entries}
     missing = required_ids - submitted_ids
     if missing:
