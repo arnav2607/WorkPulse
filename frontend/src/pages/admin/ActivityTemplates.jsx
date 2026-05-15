@@ -15,7 +15,7 @@ export default function ActivityTemplates() {
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: "", description: "", is_required: true });
+  const [form, setForm] = useState({ name: "", description: "", is_required: true, frequency: "daily", frequency_value: "" });
 
   const load = async () => {
     const { data } = await api.get("/activities/template/all");
@@ -23,10 +23,10 @@ export default function ActivityTemplates() {
   };
   useEffect(() => { load(); }, []);
 
-  const startNew = () => { setEditing(null); setForm({ name: "", description: "", is_required: true }); setOpen(true); };
+  const startNew = () => { setEditing(null); setForm({ name: "", description: "", is_required: true, frequency: "daily", frequency_value: "" }); setOpen(true); };
   const startEdit = (it) => {
     setEditing(it);
-    setForm({ name: it.name, description: it.description || "", is_required: it.is_required });
+    setForm({ name: it.name, description: it.description || "", is_required: it.is_required, frequency: it.frequency || "daily", frequency_value: it.frequency_value || "" });
     setOpen(true);
   };
 
@@ -81,6 +81,7 @@ export default function ActivityTemplates() {
             <div className="flex gap-2 mt-3">
               {it.is_required && (<span className="px-2 py-0.5 text-[10px] uppercase tracking-wider rounded-full bg-[#14532d] text-white">Required</span>)}
               {!it.is_active && (<span className="px-2 py-0.5 text-[10px] uppercase tracking-wider rounded-full bg-stone-200 text-stone-600">Inactive</span>)}
+              <span className="px-2 py-0.5 text-[10px] uppercase tracking-wider rounded-full bg-stone-200 text-stone-700">{it.frequency || "daily"} {it.frequency_value && `(${it.frequency_value})`}</span>
             </div>
           </div>
         ))}
@@ -96,6 +97,31 @@ export default function ActivityTemplates() {
           <div className="space-y-3">
             <div><Label>Name</Label><Input data-testid="tpl-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
             <div><Label>Description</Label><Textarea data-testid="tpl-desc" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Frequency</Label>
+                <select 
+                  className="flex h-10 w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-sm outline-none focus:border-[#14532d]"
+                  value={form.frequency} 
+                  onChange={(e) => setForm({ ...form, frequency: e.target.value })}
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="annually">Annually</option>
+                </select>
+              </div>
+              {form.frequency !== "daily" && (
+                <div>
+                  <Label>Frequency Value</Label>
+                  <Input 
+                    placeholder={form.frequency === "weekly" ? "e.g. Sat" : form.frequency === "monthly" ? "e.g. 05" : "e.g. 06-01"} 
+                    value={form.frequency_value || ""} 
+                    onChange={(e) => setForm({ ...form, frequency_value: e.target.value })} 
+                  />
+                </div>
+              )}
+            </div>
             <div className="flex items-center justify-between border border-[#e5e3db] rounded-lg p-3">
               <div>
                 <p className="text-sm font-medium">Required</p>
